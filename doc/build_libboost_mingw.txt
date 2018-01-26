@@ -1,0 +1,4 @@
+C:\boost_1_52_0> bootstrap.bat mingw 
+Building Boost.Build engine 
+...
+C:\boost_1_52_0> b2 toolset=gcc
