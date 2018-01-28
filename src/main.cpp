@@ -44,7 +44,8 @@ int main(int argc, char** argv) {
 	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
 	int bx = 18, ex = 50;
-	int by = 10, ey = 50;
+	int by = 20, ey = 50;
+	bool fast_init = false;
 
 	ofstream myfile;
 	myfile.open("map3.txt", ios::out | ios::app);
@@ -53,8 +54,9 @@ int main(int argc, char** argv) {
 			for (int x = bx; x <= ex; x++) {
 				if (y + x < 18)
 					continue;
-				double angspeed = findXAimSpeed(x, y, acq);
+				double angspeed = findXAimSpeed(x, y, acq, fast_init);
 				myfile << x << ";" << y << ";" << angspeed << endl;
+				fast_init = true;
 			}
 			myfile.flush();
 		}
@@ -62,6 +64,8 @@ int main(int argc, char** argv) {
 		cout << ex.what() << endl;
 	}
 	myfile.close();
+
+	waitKey(0);
 
 	return 0;
 }

@@ -67,10 +67,13 @@ public:
 		} else {
 			delta_angle = cur_angle - last_angle;
 			if (delta_angle < 0) {
+				if(passed360){
+					return 1; // Two cycles completed.
+				}
 				passed360 = true;
 				delta_angle = cur_angle + 360 - last_angle;
 			}
-			if (passed360 == true) {
+			if (passed360) {
 				if (cur_angle > first_angle) { //A cycle completed
 					return 1;
 				}
@@ -100,10 +103,15 @@ public:
 	}
 };
 
-static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const Acquisition& acq) {
+static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const Acquisition& acq,
+		bool fast_init = false) {
 	cout << "Starting new experiment for (" << x_axis << "," << y_axis << ")..." << endl;
 	setAimSpeed(x_axis, 127, 0);
-	this_thread::sleep_for(chrono::milliseconds(1100));
+	if (fast_init) {
+		this_thread::sleep_for(chrono::milliseconds(200));
+	} else {
+		this_thread::sleep_for(chrono::milliseconds(1100));
+	}
 	setAimSpeed(x_axis, y_axis, 0);
 	this_thread::sleep_for(chrono::milliseconds(500));
 	removeBuffer(vc);
@@ -118,7 +126,7 @@ static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const A
 	return match_obs.getAverageSpeed();
 }
 
-double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq) {
+double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq, bool fast_init) {
 	VideoCapture vc(0);
 
 	if (!vc.isOpened()) {
@@ -128,7 +136,7 @@ double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq) {
 	vc.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
 	vc.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	return startExperimentX(vc, x_axis, y_axis, acq);
+	return startExperimentX(vc, x_axis, y_axis, acq, fast_init);
 }
 
 //================================================//
