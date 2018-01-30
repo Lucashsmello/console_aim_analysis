@@ -84,8 +84,6 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 //	waitKey(1);
 
 	if (low_mse > 10) {
-		getFrameIndex(match, 0, 360);
-		waitKey(0);
 		throw CharacterOutOfPositionException();
 	}
 
