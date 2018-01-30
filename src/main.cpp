@@ -61,7 +61,6 @@ int main(int argc, char** argv) {
 			myfile.flush();
 		}
 	} catch (CharacterOutOfPositionException& ex) {
-		cout <<"CATCHED" << endl;
 		cout << ex.what() << endl;
 	}
 	myfile.close();
