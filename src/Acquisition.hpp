@@ -45,11 +45,21 @@ public:
 	/**
 	 * Returns in degrees.
 	 */
-	double getAngle(int frame_index) const {
+	double getAngle(unsigned int frame_index) const {
 		return getDuration(frame_index) * angspeed;
 	}
 
+	/**
+	 * Returns in degrees.
+	 */
 	double getAngle(const cv::Mat& match) const;
+
+	unsigned int getFrameIndex(const cv::Mat& match, unsigned int start_index_search,
+			double range_angle) const;
+
+//	unsigned int getFrameIndex(const cv::Mat& match) const {
+//		return getFrameIndex(match, 0, 360);
+//	}
 
 };
 

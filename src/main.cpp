@@ -39,7 +39,7 @@ using namespace aim_analysis;
 //}
 
 int main(int argc, char** argv) {
-	double angspeed = findXAimSpeed(18, 0);
+	double angspeed = findXAimSpeed(17, 0);
 	cout << "pivot_ang_speed:" << angspeed << endl;
 	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
@@ -61,11 +61,10 @@ int main(int argc, char** argv) {
 			myfile.flush();
 		}
 	} catch (CharacterOutOfPositionException& ex) {
+		cout <<"CATCHED" << endl;
 		cout << ex.what() << endl;
 	}
 	myfile.close();
-
-	waitKey(0);
 
 	return 0;
 }

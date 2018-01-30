@@ -31,18 +31,25 @@ class MatchObserver: public EventVideoCapture::VideoListener {
 	const Acquisition& acq;
 
 	double sum_speed = 0;
-	double sumX2 = 0;
+//	double sumX2 = 0;
 	int n = 0;
 
 	double cur_angle = -1;
 	double last_angle = -1;
 	int last_fn = 0;
+	unsigned int last_frame_index_match = 0;
 	int first_fn = -1;
 	double first_angle = -1;
 	bool passed360 = false;
 
-	double delta_angle; //temporary variable;
-	double tmp; //temporary variable 2;
+	void updateCurrentAngle() {
+		cur_angle = acq.getAngle(last_frame_index_match);
+//		if (last_frame_index_match == 0) {
+//			last_frame_index_match = acq.frames.size() - 5;
+//		} else {
+//			last_frame_index_match -= 5;
+//		}
+	}
 
 public:
 	MatchObserver(const Acquisition& acquisition) :
@@ -51,6 +58,8 @@ public:
 	}
 
 	virtual int frameRead(cv::Mat& mat, int frame_number) {
+		double delta_angle; //temporary variable;
+		double tmp; //temporary variable 2;
 //		cout << "frameRead() called" << endl;
 //		cout << "size=" << mat.rows << "x" << mat.cols << endl;
 		Mat new_mat(mat, R);
@@ -58,16 +67,22 @@ public:
 
 		imshow("W", new_mat);
 		waitKey(1);
-		cur_angle = acq.getAngle(new_mat);
+
 //		cout << "cur_angle:" << cur_angle << endl;
 		if (first_fn == -1) {
+			last_frame_index_match = acq.getFrameIndex(new_mat, 0, 360);
+			updateCurrentAngle();
+
 			first_fn = frame_number;
 			first_angle = cur_angle;
 			passed360 = false;
 		} else {
+			last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match, 90);
+			updateCurrentAngle();
+
 			delta_angle = cur_angle - last_angle;
 			if (delta_angle < 0) {
-				if(passed360){
+				if (passed360) {
 					return 1; // Two cycles completed.
 				}
 				passed360 = true;
@@ -80,7 +95,7 @@ public:
 			}
 			tmp = delta_angle / (frame_number - last_fn);
 			sum_speed += tmp;
-			sumX2 += tmp * tmp;
+//			sumX2 += tmp * tmp;
 			n++;
 //			if (frame_number % 45) {
 //				cout << "delta_angle_rel:" << tmp << "  estimated avg speed:"
@@ -97,10 +112,10 @@ public:
 		return ((sum_speed / n) * FPS);
 	}
 
-	double getStdDevSpeed() const {
-		double avg = getAverageSpeed();
-		return sqrt(sumX2 / n * FPS * FPS - avg * avg);
-	}
+//	double getStdDevSpeed() const {
+//		double avg = getAverageSpeed();
+//		return sqrt(sumX2 / n * FPS * FPS - avg * avg);
+//	}
 };
 
 static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const Acquisition& acq,
@@ -120,8 +135,9 @@ static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const A
 	EventVideoCapture evtvc(vc, &match_obs);
 	evtvc.startReadLoop();
 
-	cout << ">>average=" << match_obs.getAverageSpeed() << " STD_DEV=" << match_obs.getStdDevSpeed()
-			<< endl;
+	cout << ">>average=" << match_obs.getAverageSpeed() <<
+//			" STD_DEV=" << match_obs.getStdDevSpeed() <<
+			endl;
 
 	return match_obs.getAverageSpeed();
 }
@@ -185,7 +201,7 @@ static int waitForMatch(VideoCapture& vc, const vector<Mat>& match_list,
 				close_frame = frame;
 				close_frame_mse = cur_mse;
 				cfn = fn;
-				imshow("Closest", close_frame);
+//				imshow("Closest", close_frame);
 //				cout << "C:" << cur_mse << endl;
 				if (end_time_OUT != NULL)
 					*end_time_OUT = finish;
@@ -198,7 +214,7 @@ static int waitForMatch(VideoCapture& vc, const vector<Mat>& match_list,
 				close_frame = frame;
 				close_frame_mse = cur_mse;
 				cfn = fn;
-				imshow("Closest", close_frame);
+//				imshow("Closest", close_frame);
 //				cout << "C:" << cur_mse << endl;
 
 			}
@@ -214,7 +230,7 @@ static int waitForMatch(VideoCapture& vc, const vector<Mat>& match_list,
 		}
 
 		vwriter.write(frame);
-		imshow("W1", frame);
+		imshow("W", frame);
 		waitKey(1);
 		last_frame = frame;
 		last_mse = cur_mse;
