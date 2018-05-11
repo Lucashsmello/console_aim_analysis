@@ -26,7 +26,7 @@ void EventVideoCapture::startReadLoop() {
 	abort = false;
 	new_frame = false;
 //	cout << "Starting ReadLoop..." << endl;
-	boost::thread T = boost::thread(boost::bind(&readLoop, this));
+	boost::thread T = boost::thread(boost::bind(&EventVideoCapture::readLoop, this));
 //	boost::thread T2;
 //	if (vlistener2 != NULL) {
 //		T2 = boost::thread(&listenerLoop, boost::ref(this), vlistener2);
@@ -83,7 +83,7 @@ void EventVideoCapture::listenerLoop(VideoListener* l) {
 		cloned_frame = cur_frame.clone();
 		cur_fn = fn;
 		Frame_mutex.unlock();
-		if (l->frameRead(cur_frame, cur_fn) == 1) {
+		if (l->frameRead(cloned_frame, cur_fn) == 1) {
 			stopReadLoop();
 			break;
 		}

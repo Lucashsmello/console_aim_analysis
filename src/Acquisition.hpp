@@ -19,7 +19,8 @@ static const int RESX = 1280;
 static const int RESY = 720;
 static const int DX = RESX / 8;
 static const int DY = RESY / 8;
-static const cv::Rect R(RESX / 2 - DX, RESY / 2 - DY, 1.22 * DX, 1.75 * DY);
+//static const cv::Rect R(RESX / 2 - DX, RESY / 2 - DY, 1.22 * DX, 1.75 * DY); //OVERWATCH
+static const cv::Rect R(RESX / 2 - 0.62 * DX, RESY / 2 - DY, 1.22 * DX, 1.72 * DY); //HORIZON
 
 class Acquisition {
 public:

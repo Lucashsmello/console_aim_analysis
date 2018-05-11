@@ -5,6 +5,9 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include "aim_analysis/AimData.hpp"
+#include "gimx_api.h"
+#include <thread>
+#include <chrono>
 
 using namespace cv;
 using namespace std;
@@ -13,12 +16,16 @@ using namespace aim_analysis;
 int main(int argc, char** argv) {
 	AimData aimdata("aimdata.csv");
 
-	double angspeed = findXAimSpeed(17, 0);
+	pressButton(13,true);
+	this_thread::sleep_for(chrono::milliseconds(1000));
+
+
+	double angspeed = findXAimSpeed(35, 0);
 	cout << "pivot_ang_speed:" << angspeed << endl;
 	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
-	int bx = 18, ex = 50;
-	int by = 31, ey = 50;
+	int bx = 36, ex = 127;
+	int by = 36, ey = 127;
 	bool fast_init = false;
 
 	try {

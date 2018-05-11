@@ -257,13 +257,15 @@ static double startExperiment(VideoCapture& vc, const vector<Mat>& match_list,
 	high_resolution_clock::time_point finish;
 	fn += waitForMatch(vc, match_list, &finish, good_mse_limit, NULL, vwriter);
 	int TTT = chrono::duration_cast<chrono::microseconds>(finish - start).count();
-	TTT += 10 * 1000;
+//	TTT += 10 * 1000;
 	double angspeed1 = total_mvt_angle / (TTT / 1000.0) * 1000;
 	double angspeed2 = (60 * total_mvt_angle) / fn;
 
-	if (fabs(angspeed1 / angspeed2 - 1) > 0.03) {
+	if (fabs(angspeed1 / angspeed2 - 1) > 0.02) {
 		throw InconsistentAngSpeedEstimation(angspeed1, angspeed2);
 	}
+//	cout << "angspeed_time:" << angspeed1 << " angspeed_frames:" << angspeed2 << endl;
+
 	return (angspeed1 + angspeed2) / 2;
 }
 
