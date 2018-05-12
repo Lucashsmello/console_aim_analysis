@@ -38,6 +38,12 @@ double Acquisition::getAngle(const cv::Mat& match) const {
 	return getAngle(getFrameIndex(match, 0, 360));
 }
 
+struct Compare {
+	double val;
+	unsigned int index;
+};
+#pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)
+
 unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start_index_search,
 		double range_angle) const {
 	if (match.rows != frames[0].rows || match.cols != frames[0].cols) {
@@ -56,25 +62,37 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 	const unsigned int end1 = MIN(end_index_search, frames.size());
 	const unsigned int end2 = end_index_search - end1;
 
-	double low_mse = mse(frames[start_index_search], match);
-	unsigned int low_index = start_index_search;
-	double cur_mse;
+//	double low_mse = mse(frames[start_index_search], match);
+//	unsigned int low_index = start_index_search;
+	Compare lowest;
+	lowest.val = mse(frames[start_index_search], match);
+	lowest.index = start_index_search;
+
+//	#pragma omp parallel for reduction(minimum:lowest)
+	#pragma omp parallel for
 	for (unsigned int i = start_index_search + 1; i < end1; i++) {
-		cur_mse = mse(frames[i], match);
-		if (cur_mse < low_mse) {
-			low_index = i;
-			low_mse = cur_mse;
+		double cur_mse = mse(frames[i], match);
+	#pragma omp critical
+		{
+			if (cur_mse < lowest.val) {
+				lowest.index = i;
+				lowest.val = cur_mse;
+			}
 		}
 	}
 
+//	#pragma omp parallel for reduction(minimum:lowest)
+	#pragma omp parallel for
 	for (unsigned int i = 0; i < end2; i++) {
-		cur_mse = mse(frames[i], match);
-		if (cur_mse < low_mse) {
-			low_index = i;
-			low_mse = cur_mse;
+		double cur_mse = mse(frames[i], match);
+	#pragma omp critical
+		{
+			if (cur_mse < lowest.val) {
+				lowest.index = i;
+				lowest.val = cur_mse;
+			}
 		}
 	}
-
 
 //	imshow("MATCH", match);
 //	imshow("NEAR", frames[low_index]);
@@ -83,11 +101,11 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 //	imshow("N3", frames[low_index + 3]);
 //	waitKey(1);
 
-	if (low_mse > 10) {
+	if (lowest.val > 10) {
 		throw CharacterOutOfPositionException();
 	}
 
-	return low_index;
+	return lowest.index;
 }
 
 } /* namespace console_analysis */

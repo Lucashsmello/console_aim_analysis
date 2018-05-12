@@ -1,7 +1,7 @@
-CINC = -I"C:\myPrograms\opencv3.4\mingwBuild2\install\include" -I"$(BOOST_DIR)"
+CINC = -I"C:\myPrograms\opencv3.4\mingwBuild2\install\include" -I"$(BOOST_DIR)" -fopenmp
 LDSEARCHPATH = -L"C:\myPrograms\opencv3.4\mingwBuild2\install\x64\mingw\bin" -L"$(BOOST_DIR)\stage\lib"
 #LDSEARCHPATH = -L$(Path)
-LDFLAGS = -lopencv_core340 -lopencv_imgproc340 -lopencv_imgcodecs340 -lopencv_highgui340 -lopencv_videoio340
+LDFLAGS = -lopencv_core340 -lopencv_imgproc340 -lopencv_imgcodecs340 -lopencv_highgui340 -lopencv_videoio340 -lws2_32 -fopenmp
 #LDFLAGS := $(shell pkg-config --cflags --libs C:\myPrograms\opencv3.4\mingwBuild\unix-install\opencv.pc) -fopenmp
 CFLAGS = -Wall -Wno-sign-compare -Wno-unused-variable -Wno-unused-function -Wno-strict-aliasing -std=c++11 -O3 $(CINC)
 OBJDIR	= .obj

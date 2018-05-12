@@ -58,6 +58,7 @@ public:
 	}
 
 	virtual int frameRead(cv::Mat& mat, int frame_number) {
+
 		double delta_angle; //temporary variable;
 		double tmp; //temporary variable 2;
 //		cout << "frameRead() called" << endl;
