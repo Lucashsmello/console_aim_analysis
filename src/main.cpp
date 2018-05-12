@@ -15,17 +15,18 @@ using namespace aim_analysis;
 
 int main(int argc, char** argv) {
 	AimData aimdata("aimdata.csv");
+	initializeGIMXConnetion();
 
-	pressButton(13,true);
-	this_thread::sleep_for(chrono::milliseconds(1000));
+//	pressButton(13,true);
+//	this_thread::sleep_for(chrono::milliseconds(1000));
 
 
-	double angspeed = findXAimSpeed(35, 0);
+	double angspeed = findXAimSpeed(15, 0);
 	cout << "pivot_ang_speed:" << angspeed << endl;
 	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
-	int bx = 36, ex = 127;
-	int by = 36, ey = 127;
+	int bx = 22, ex = 127;
+	int by = 0, ey = 127;
 	bool fast_init = false;
 
 	try {
