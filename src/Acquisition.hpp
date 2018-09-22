@@ -17,10 +17,11 @@ static const unsigned int FPS = 60;
 static const double FRAME_PERIOD_SEC = 1.0 / FPS;
 static const int RESX = 1280;
 static const int RESY = 720;
-static const int DX = RESX / 8;
-static const int DY = RESY / 8;
+static const int DX = RESX / 12;
+static const int DY = RESY / 12;
 //static const cv::Rect R(RESX / 2 - DX, RESY / 2 - DY, 1.22 * DX, 1.75 * DY); //OVERWATCH
-static const cv::Rect R(RESX / 2 - 0.62 * DX, RESY / 2 - DY, 1.22 * DX, 1.72 * DY); //HORIZON
+//static const cv::Rect R(RESX / 2 - 0.62 * DX, RESY / 2 - DY, 1.22 * DX, 1.72 * DY); //HORIZON
+static const cv::Rect R(240, 150, 110, 110); //DESTINY2
 
 class Acquisition {
 public:

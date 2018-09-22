@@ -14,31 +14,29 @@ using namespace std;
 using namespace aim_analysis;
 
 int main(int argc, char** argv) {
-	AimData aimdata("aimdata.csv");
+	AimData aimdata("aimdata_withaim.csv");
 	initializeGIMXConnetion();
 
 //	pressButton(13,true);
 //	this_thread::sleep_for(chrono::milliseconds(1000));
 
-
-	double angspeed = findXAimSpeed(15, 0);
+	double angspeed = findXAimSpeed(48, 0);
 	cout << "pivot_ang_speed:" << angspeed << endl;
 	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
-	int bx = 22, ex = 127;
-	int by = 0, ey = 127;
+	int bx = 90, ex = 99;
+	int by = 0, ey = 10;
 	bool fast_init = false;
 
 	try {
 		for (int y = by; y <= ey; y++) {
 			for (int x = bx; x <= ex; x++) {
-				if (y + x < 18)
-					continue;
 				if (aimdata.hasXSpeed(x, y))
 					continue;
-				double angspeed = findXAimSpeed(x, y, acq, fast_init);
+				double angspeed = findXAimSpeed(x, y,acq,false,false); // esse metodo so funciona se o video do pivot eh relativamente pequeno???
+//				double angspeed = findXAimSpeed(x, y);
 				aimdata.saveResult(x, y, angspeed);
-				fast_init = true;
+//				fast_init = true;
 			}
 		}
 	} catch (CharacterOutOfPositionException& ex) {

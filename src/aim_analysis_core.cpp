@@ -19,11 +19,14 @@
 #include <cstdio>
 #include <chrono>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 using namespace cv;
 using namespace std::chrono;
 using namespace aim_analysis;
+
+static VideoCapture VCD(0);
 
 class MatchObserver: public EventVideoCapture::VideoListener {
 //	VideoWriter vwriter;
@@ -66,8 +69,8 @@ public:
 		Mat new_mat(mat, R);
 //		Mat new_mat = tmp_mat.clone();
 
-		imshow("W", new_mat);
-		waitKey(1);
+//		imshow("W", new_mat);
+//		waitKey(1);
 
 //		cout << "cur_angle:" << cur_angle << endl;
 		if (first_fn == -1) {
@@ -98,10 +101,10 @@ public:
 			sum_speed += tmp;
 //			sumX2 += tmp * tmp;
 			n++;
-//			if (frame_number % 45) {
-//				cout << "delta_angle_rel:" << tmp << "  estimated avg speed:"
-//						<< getAverageSpeed() << endl;
-//			}
+			if (frame_number % 45 == 0) {
+				cout << "delta_angle_rel:" << tmp << "  estimated avg speed:"
+						<< getAverageSpeed() << endl;
+			}
 		}
 
 		last_fn = frame_number;
@@ -119,47 +122,152 @@ public:
 //	}
 };
 
+class MatchObserver2: public EventVideoCapture::VideoListener {
+	const Acquisition& acq;
+	int fn1 = -1;
+	bool moved = false;
+	int xaxis;
+	int yaxis;
+	double ang1 = -1;
+	int jump_frames = 0;
+
+	double sum_speed = 0;
+	double sum_speed2 = 0;
+	int n = 0;
+	Mat newmat;
+
+//	int last_fn = -1;
+
+public:
+	MatchObserver2(int x_axis, int y_axis, const Acquisition& acquisition) :
+			acq(acquisition) {
+		xaxis = x_axis;
+		yaxis = y_axis;
+	}
+
+	virtual int frameRead(cv::Mat& mat, int frame_number) {
+//		if (last_fn >= 0 and frame_number != last_fn + 1) {
+//			cout << "frameRead() ERROR: frame number non-sequential!!! " << last_fn << ","
+//					<< frame_number << endl;
+//		}
+
+//		last_fn = frame_number;
+		if (jump_frames > 0) {
+			jump_frames--;
+			return 0;
+		}
+
+		if (not moved) {
+			if (ang1 == -1) {
+				newmat = Mat(mat, R);
+				ang1 = acq.getAngle(newmat);
+				jump_frames = 5;
+				return 0;
+			}
+			fn1 = frame_number;
+			setAimSpeed(xaxis, yaxis, 0);
+			moved = true;
+			return 0;
+		}
+		if (frame_number == fn1 + 1) {
+			setAimSpeed(0, 0, 0);
+			jump_frames = 20;
+			fn1 = -2;
+			return 0;
+		}
+		if (fn1 != -2) {
+			cout << "frameRead() ERROR CODE 2" << endl;
+		}
+
+		newmat = Mat(mat, R);
+		double dx = acq.getAngle(newmat) - ang1;
+		if (dx < 0) {
+			dx += 360;
+		}
+
+		sum_speed += dx;
+		sum_speed2 += dx * dx;
+		n++;
+		if (n == 30) {
+			return 1;
+		}
+
+		ang1 = -1;
+		moved = false;
+		return 0;
+	}
+
+	/**
+	 *
+	 * @return in degrees per frame.
+	 */
+	double getAverageSpeed() const {
+		return sum_speed / n;
+	}
+
+	/**
+	 *
+	 * @return in degrees per frame.
+	 */
+	double getSTDSpeed() const {
+		return sum_speed2 / n - getAverageSpeed() * getAverageSpeed();
+	}
+
+};
+
 static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis, const Acquisition& acq,
-		bool fast_init = false) {
+		bool fast_init = false, bool single_tick = false) {
 	cout << "Starting new experiment for (" << x_axis << "," << y_axis << ")..." << endl;
 	setAimSpeed(x_axis, 127, 0);
 	if (fast_init) {
-		this_thread::sleep_for(chrono::milliseconds(200));
+		this_thread::sleep_for(chrono::milliseconds(100));
 	} else {
 		this_thread::sleep_for(chrono::milliseconds(1100));
 	}
-	setAimSpeed(x_axis, y_axis, 0);
-	this_thread::sleep_for(chrono::milliseconds(500));
-	removeBuffer(vc);
+	if (single_tick) {
+		Mat fr1, fr2;
+		setAimSpeed(0, 0, 0);
+		this_thread::sleep_for(chrono::milliseconds(500));
+		MatchObserver2 match_obs(x_axis, y_axis, acq);
+		EventVideoCapture evtvc(vc, &match_obs);
+		evtvc.startReadLoop();
 
-	MatchObserver match_obs(acq);
-	EventVideoCapture evtvc(vc, &match_obs);
-	evtvc.startReadLoop();
+		cout << ">>average=" << match_obs.getAverageSpeed() << " STD_DEV="
+				<< match_obs.getSTDSpeed() << endl;
 
-	cout << ">>average=" << match_obs.getAverageSpeed() <<
-//			" STD_DEV=" << match_obs.getStdDevSpeed() <<
-			endl;
+		return match_obs.getAverageSpeed();
+	} else {
+		setAimSpeed(x_axis, y_axis, 0);
+		this_thread::sleep_for(chrono::milliseconds(500));
+		MatchObserver match_obs(acq);
+		EventVideoCapture evtvc(vc, &match_obs);
+		evtvc.startReadLoop();
 
-	return match_obs.getAverageSpeed();
+		cout << ">>average=" << match_obs.getAverageSpeed() <<
+		//			" STD_DEV=" << match_obs.getStdDevSpeed() <<
+				endl;
+
+		return match_obs.getAverageSpeed();
+	}
+
 }
 
-double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq, bool fast_init) {
-	VideoCapture vc(0);
-
-	if (!vc.isOpened()) {
+double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq, bool fast_init,
+		bool single_tick) {
+	if (!VCD.isOpened()) {
 		printf("Nao foi possivel abrir o VideoCapture.\n");
 		return -1;
 	}
-	vc.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
-	vc.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+	VCD.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
+	VCD.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	return startExperimentX(vc, x_axis, y_axis, acq, fast_init);
+	double ret=startExperimentX(VCD, x_axis, y_axis, acq, fast_init, single_tick);
+	return ret;
 }
 
 //================================================//
 //=================OLD METHOD=====================//
 //================================================//
-
 static int waitForMatch(VideoCapture& vc, const vector<Mat>& match_list,
 		high_resolution_clock::time_point* end_time_OUT, const double good_mse_limit,
 		vector<Mat>* frames_read_OUT, VideoWriter& vwriter) {
@@ -277,7 +385,7 @@ static double startExperiment(VideoCapture& vc, Mat& match, double total_mvt_ang
 }
 
 static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis,
-		const double good_mse_limit = 5, int num_exps = 1) {
+		const double good_mse_limit = 6, int num_exps = 1) {
 	VideoWriter vwriter;
 	vwriter.open(PIVOT_VIDEO_NAME, CV_FOURCC('M', 'J', 'P', 'G'), 60, Size(R.width, R.height),
 			true);
@@ -293,30 +401,21 @@ static double startExperimentX(VideoCapture& vc, int x_axis, int y_axis,
 	vc >> first_frame;
 	first_frame = Mat(first_frame, R);
 	vwriter.write(first_frame);
-	double ret = startExperiment(vc, first_frame, 360, 6, vwriter);
+	double ret = startExperiment(vc, first_frame, 360, good_mse_limit, vwriter);
 	vwriter.release();
 	return ret;
 }
 
 double findXAimSpeed(int x_axis, int y_axis) {
-	VideoCapture vc(0);
-	if (!vc.isOpened()) {
+	if (!VCD.isOpened()) {
 		printf("Nao foi possivel abrir o VideoCapture.\n");
 		return -1;
 	}
-	vc.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
-	vc.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+	VCD.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
+	VCD.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	double ret = startExperimentX(vc, x_axis, y_axis, 5, 5);
-	vc.release();
+	double ret = startExperimentX(VCD, x_axis, y_axis, 7);
+//	vc.release();
 	return ret;
-//	setAimSpeed(x_axis, 127, 0);
-//	this_thread::sleep_for(chrono::milliseconds(1100));
-//	setAimSpeed(x_axis, y_axis, 0);
-//	this_thread::sleep_for(chrono::milliseconds(20));
-//	removeBuffer(vc);
-//	vc >> first_frame;
-//	first_frame = Mat(first_frame, R);
-//	return startExperiment(vc, first_frame, 360);
 }
 

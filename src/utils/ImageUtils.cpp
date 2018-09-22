@@ -35,13 +35,11 @@ void makeBorder(cv::Mat& img, const cv::Rect& r) {
 	makeBorder(img, r.y, r.y + r.height, r.x, r.x + r.width);
 }
 
-void red_filter(Mat& I, int l1, int l2, int s_min, int v_min, int s_max,
-		int v_max) {
+void red_filter(Mat& I, int l1, int l2, int s_min, int v_min, int s_max, int v_max) {
 	red_filter(I, I, l1, l2, s_min, v_min, s_max, v_max);
 }
 
-void red_filter(Mat& I, Mat& buffer, int l1, int l2, int s_min, int v_min,
-		int s_max, int v_max) {
+void red_filter(Mat& I, Mat& buffer, int l1, int l2, int s_min, int v_min, int s_max, int v_max) {
 	Mat1b mask = red_filter_mask(I, buffer, l1, l2, s_min, v_min, s_max, v_max);
 	apply_mask(I, mask);
 }
@@ -71,19 +69,23 @@ void apply_mask(Mat& I, const Mat1b& mask) { //TODO: Optimize
 	}
 	Mat_<Vec3b> _I = I;
 	const uchar* P;
+	uchar* _Iptr;
 	for (int row = 0; row < I.rows; row++) {
 		P = mask.ptr<uchar>(row);
+		_Iptr = _I.ptr<uchar>(row);
+		int j;
 		for (int col = 0; col < I.cols; col++) {
 			if (P[col] == 0) {
-				_I(row, col)[0] = 0;
-				_I(row, col)[1] = 0;
-				_I(row, col)[2] = 0;
+				j = 3 * col;
+				_Iptr[j] = 0;
+				_Iptr[j + 1] = 0;
+				_Iptr[j + 2] = 0;
 			}
 		}
 	}
 }
 
-void drawGreenCross(cv::Mat& I, cv::Point p, int size, int length) {
+void drawCross(cv::Mat& I, cv::Point p, uchar r, uchar g, uchar b, int size, int length) {
 	if (length == -1) {
 		length = I.cols;
 	}
@@ -96,9 +98,9 @@ void drawGreenCross(cv::Mat& I, cv::Point p, int size, int length) {
 		}
 		for (int i = -size; i <= size; i++) {
 			if (p.x + i >= 0 && p.x + i < m) {
-				_I(row, p.x + i)[0] = 0;
-				_I(row, p.x + i)[1] = 200;
-				_I(row, p.x + i)[2] = 0;
+				_I(row, p.x + i)[0] = b;
+				_I(row, p.x + i)[1] = g;
+				_I(row, p.x + i)[2] = r;
 			}
 		}
 	}
@@ -109,12 +111,16 @@ void drawGreenCross(cv::Mat& I, cv::Point p, int size, int length) {
 		}
 		for (int i = -size; i <= size; i++) {
 			if (p.y + i >= 0 && p.y + i < n) {
-				_I(p.y + i, col)[0] = 0;
-				_I(p.y + i, col)[1] = 200;
-				_I(p.y + i, col)[2] = 0;
+				_I(p.y + i, col)[0] = b;
+				_I(p.y + i, col)[1] = g;
+				_I(p.y + i, col)[2] = r;
 			}
 		}
 	}
+}
+
+void drawGreenCross(cv::Mat& I, cv::Point p, int size, int length) {
+	drawCross(I, p, 0, 200, 0, size, length);
 }
 
 void my_imshow(const cv::Mat& m) {
@@ -125,8 +131,7 @@ void my_imshow(const cv::Mat& m) {
 
 void apply_distmask(Mat& src, const Mat& mask) {
 	if (src.rows != mask.rows || src.cols != mask.cols) {
-		printf(
-				"ERROR! apply_distmask():'src.rows != mask.rows || src.cols!=mask.cols'\n");
+		printf("ERROR! apply_distmask():'src.rows != mask.rows || src.cols!=mask.cols'\n");
 		return;
 	}
 	cv::Mat_<cv::Vec3b> _I = src;
@@ -166,14 +171,13 @@ cv::Mat coloredImage(const cv::Mat& r) {
 	return color;
 }
 
-cv::Mat1b red_filter_mask(const cv::Mat& I, cv::Mat& buffer, int l1, int l2,
-		int s_min, int v_min, int s_max, int v_max) {
+cv::Mat1b red_filter_mask(const cv::Mat& I, cv::Mat& buffer, int l1, int l2, int s_min, int v_min,
+		int s_max, int v_max) {
 	cv::cvtColor(I, buffer, cv::COLOR_BGR2HSV);
 	Mat1b mask1, mask2;
-	cv::inRange(buffer, cv::Scalar(0, s_min, v_min),
-			cv::Scalar(l1, s_max, v_max), mask1);
-	cv::inRange(buffer, cv::Scalar(l2, s_min, v_min),
-			cv::Scalar(180, s_max, v_max), mask2);
+	cv::inRange(buffer, cv::Scalar(0, s_min, v_min), cv::Scalar(l1, s_max, v_max), mask1);
+	cv::inRange(buffer, cv::Scalar(l2, s_min, v_min), cv::Scalar(180, s_max, v_max), mask2);
+
 	Mat1b mask = mask1 | mask2;
 	if (I.data == buffer.data)
 		cvtColor(buffer, buffer, cv::COLOR_HSV2BGR);
@@ -228,8 +232,7 @@ bool isValidArea(const cv::VideoCapture& vc, const cv::Rect& r) {
 	return (r.x + r.width < w) && (r.y + r.height < h);
 }
 
-Mat1b generateRedFilterLookupTable(int l1, int l2, int s_min, int v_min,
-		int s_max, int v_max) {
+Mat1b generateRedFilterLookupTable(int l1, int l2, int s_min, int v_min, int s_max, int v_max) {
 	Mat temp(256, 256, CV_8UC3);
 	for (int j = 0; j < 256; j++) {
 		uchar* P = temp.ptr<uchar>(j);
@@ -239,8 +242,7 @@ Mat1b generateRedFilterLookupTable(int l1, int l2, int s_min, int v_min,
 			P[3 * k + 2] = 235;
 		}
 	}
-	Mat1b mask = red_filter_mask(temp, temp, l1, l2, s_min, v_min, s_max,
-			v_max);
+	Mat1b mask = red_filter_mask(temp, temp, l1, l2, s_min, v_min, s_max, v_max);
 	return mask;
 
 }
@@ -273,20 +275,21 @@ Mat1b generateRedFilterLookupTable(int l1, int l2, int s_min, int v_min,
 /**
  * Idst must be a single channel matrix.
  */
-void applyMaskFromLookupTable(const Mat& I, Mat& Idst,
-		const Mat1b& lookuptable) {
-	uchar v;
-	uchar r, g, b;
+void applyMaskFromLookupTable(const Mat& I, Mat& Idst, const Mat1b& lookuptable) {
+
+#pragma omp parallel for
 	for (int i = 0; i < I.rows; i++) {
+		uchar v;
+		uchar r, g, b;
 		const uchar* p = I.ptr<uchar>(i);
 		uchar* pdst = Idst.ptr<uchar>(i);
 		for (int j = 0; j < I.cols; j++) {
-			b = p[3 * j];
-			g = p[3 * j + 1];
 			r = p[3 * j + 2];
 			if (r < 235) {
 				pdst[j] = 0;
 			} else {
+				b = p[3 * j];
+				g = p[3 * j + 1];
 				v = lookuptable.at<uchar>(b, g);
 				if (v == 0) {
 					pdst[j] = 0;
@@ -327,6 +330,13 @@ int removeBuffer(VideoCapture& vc) {
 		if (TTT > 8) {
 			break;
 		}
+		if (fc > 8) {
+			cout << "WARNING: removeBuffer 'had removed' more than 8 frames from buffer! " << fc
+					<< endl;
+		}
+		if (fc > 100) {
+			break;
+		}
 	}
 	return fc;
 }
@@ -351,4 +361,17 @@ double mse(const Mat& img1, const Mat& img2) {
 //		s /= img1.cols;
 //	}
 //	return sqrt(s / img1.rows);
+}
+
+VideoWriter openVideoWriter(const VideoCapture& vc, const char* outfile) {
+	Size S = Size((int) vc.get(CAP_PROP_FRAME_WIDTH), // Acquire input size
+	(int) vc.get(CAP_PROP_FRAME_HEIGHT));
+	int ex = static_cast<int>(vc.get(CAP_PROP_FOURCC)); // Get Codec Type- Int form
+	cout << "Resolution:" << S << endl;
+	cout << "codec type:" << ex << endl;
+	VideoWriter outputVideo;
+//	outputVideo.open(outfile, ex, vc.get(CAP_PROP_FPS), S, true);
+	outputVideo.open(outfile, CV_FOURCC('M', 'J', 'P', 'G'), 60, S, true);
+//	outputVideo.open(outfile, ex, 60, S, true);
+	return outputVideo;
 }

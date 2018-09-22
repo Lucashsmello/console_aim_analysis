@@ -1,5 +1,5 @@
-CINC = -I"C:\myPrograms\opencv3.4\mingwBuild2\install\include" -I"$(BOOST_DIR)" -fopenmp
-LDSEARCHPATH = -L"C:\myPrograms\opencv3.4\mingwBuild2\install\x64\mingw\bin" -L"$(BOOST_DIR)\stage\lib"
+CINC = -I"$(OPENCV3.4_MINGW_DIR)\include" -I"$(BOOST_DIR)" -fopenmp
+LDSEARCHPATH = -L"$(OPENCV3.4_MINGW_DIR)\x64\mingw\bin" -L"$(BOOST_DIR)\stage\lib"
 #LDSEARCHPATH = -L$(Path)
 LDFLAGS = -lopencv_core340 -lopencv_imgproc340 -lopencv_imgcodecs340 -lopencv_highgui340 -lopencv_videoio340 -lws2_32 -fopenmp
 #LDFLAGS := $(shell pkg-config --cflags --libs C:\myPrograms\opencv3.4\mingwBuild\unix-install\opencv.pc) -fopenmp
@@ -13,11 +13,12 @@ mainOBJS = main.o gimx_api.o aim_analysis_core.o Acquisition.o utils/ImageUtils.
 mainOBJS := $(addprefix $(OBJDIR)/,$(mainOBJS))
 main: $(OBJDIR) $(mainOBJS)
 	$(CXX) -o $@ $(mainOBJS) $(LDSEARCHPATH) $(LDFLAGS) -lm -lboost_thread-mgw72-mt-x64-1_66 -lboost_system-mgw72-mt-x64-1_66
+	
+main2OBJS = main2.o gimx_api.o aim_analysis_core.o Acquisition.o utils/ImageUtils.o utils/EventVideoCapture.o aim_analysis/AimData.o
+main2OBJS := $(addprefix $(OBJDIR)/,$(main2OBJS))
+main2: $(OBJDIR) $(main2OBJS)
+	$(CXX) -o $@ $(main2OBJS) $(LDSEARCHPATH) $(LDFLAGS) -lm -lboost_thread-mgw72-mt-x64-1_66 -lboost_system-mgw72-mt-x64-1_66	
 
-testOBJS = test.o aim_analysis/AimData.o
-testOBJS := $(addprefix $(OBJDIR)/,$(testOBJS))
-test: $(OBJDIR) $(testOBJS)
-	$(CXX) -o $@ $(testOBJS) $(LDSEARCHPATH) $(LDFLAGS) -lm
 
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -23,6 +23,7 @@ void red_filter(cv::Mat& I, cv::Mat& buffer, int l1, int l2, int s_min,
 void apply_mask(cv::Mat& I, const cv::Mat1b& mask);
 
 void drawGreenCross(cv::Mat& I, cv::Point p, int size = 1, int length = -1);
+void drawCross(cv::Mat& I, cv::Point p,  uchar r, uchar g, uchar b, int size=1, int length=-1);
 
 void my_imshow(const cv::Mat& m);
 
@@ -46,7 +47,9 @@ void applyMaskFromLookupTable(const cv::Mat& I, cv::Mat& Idst,
 		const cv::Mat1b& lookuptable);
 
 int removeBuffer(cv::VideoCapture& vc);
-
+cv::VideoWriter openVideoWriter(const cv::VideoCapture& vc, const char* outfile);
 double mse(const cv::Mat& img1, const cv::Mat& img2);
+
+
 
 #endif /* CPP_UTILS_IMAGEUTILS_H_ */

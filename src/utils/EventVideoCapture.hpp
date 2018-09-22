@@ -9,11 +9,10 @@
 #define SRC_UTILS_EVENTVIDEOCAPTURE_HPP_
 
 #include <opencv2/videoio.hpp>
-#include <boost/thread.hpp>
 #include <cstdlib>
 
 class EventVideoCapture {
-	boost::mutex Frame_mutex;
+
 //	boost::mutex m_pause_mutex;
 //	boost::condition_variable m_pause_changed;
 

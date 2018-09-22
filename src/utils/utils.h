@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <time.h>
+#include <iostream>
 
 //#define PROFILE_TIME_G(LABEL,TTIME,X) X;
 
@@ -21,9 +22,9 @@
 		{\
 		auto finish = std::chrono::high_resolution_clock::now(); \
 		int TTT=std::chrono::duration_cast<TTIME>(finish - start).count(); \
-		std::cout << LABEL << TTT << "ms" << std::endl;}
+		std::cout << LABEL << TTT << std::endl;}
 
-#define PROFILE_TIME(LABEL,X) PROFILE_TIME_G(LABEL,std::chrono::milliseconds,X);
+#define PROFILE_TIME(LABEL,X) PROFILE_TIME_G(LABEL,std::chrono::microseconds,X);
 
 #define PROFILE_TIME_G_C(LABEL,TTIME,X) {PROFILE_TIME_G(LABEL,TTIME,X);}
 
@@ -86,5 +87,14 @@ public:
 	}
 
 };
+namespace lutils {
+	template<typename T>
+	static T clamp(T x, T min, T max) {
+		if (x > max) {
+			return max;
+		}
+		return x < min ? min : x;
+	}
+}
 
 #endif /* CPP_UTILS_UTILS_H_ */
