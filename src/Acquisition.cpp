@@ -101,7 +101,7 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 //	imshow("N3", frames[low_index + 3]);
 //	waitKey(1);
 
-	if (lowest.val > 10) {
+	if (lowest.val > 25) {
 		throw CharacterOutOfPositionException();
 	}
 
