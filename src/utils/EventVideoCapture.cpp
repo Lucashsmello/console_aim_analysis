@@ -115,6 +115,7 @@ void EventVideoCapture::listenerLoop(VideoListener* l) {
 		cur_fn = fn;
 		Frame_mutex.unlock();
 		if (l->frameRead(cloned_frame, cur_fn) == 1) {
+			cout << "stopping EventVideoCapture..." << endl;
 			stopReadLoop();
 			break;
 		}
