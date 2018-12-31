@@ -9,6 +9,7 @@
 #include "ImageUtils.h"
 #include <vector>
 #include <chrono>
+#include <cmath>
 
 using namespace std;
 using namespace cv;
@@ -343,24 +344,22 @@ int removeBuffer(VideoCapture& vc) {
 
 double mse(const Mat& img1, const Mat& img2) {
 	Mat tmp;
+	const double n = img1.channels() * img1.total();
+	Scalar d;
+
 	absdiff(img1, img2, tmp);
+//	Scalar s = sum(tmp);
+//	double avg = (s.val[0] + s.val[1] + s.val[2]) / n;
+//	d = sum(cv::abs(tmp - avg));
+//	double std = (d.val[0] + d.val[1] + d.val[2]) / n;
+
 	tmp.convertTo(tmp, CV_32F);
 	tmp = tmp.mul(tmp);
 	Scalar s = sum(tmp);
-	double sse = s.val[0] + s.val[1] + s.val[2]; // sum channels
-	return sqrt(sse / (double) (img1.channels() * img1.total()));
+	double sse = (s.val[0] + s.val[1] + s.val[2]) / n; // sum channels
 
-//	const int ncols = img1.cols * img1.channels();
-//	double s = 0;
-//	for (int i = 0; i < img1.rows; i++) {
-//		const uchar* P1 = img1.ptr<uchar>(i);
-//		const uchar* P2 = img2.ptr<uchar>(i);
-//		for (int j = 0; j < ncols; j++) {
-//			s += (P1[j] - P2[j]) * (P1[j] - P2[j]);
-//		}
-//		s /= img1.cols;
-//	}
-//	return sqrt(s / img1.rows);
+	return sqrt(sse);
+//	return sqrt(sse) * std / (avg + 1);
 }
 
 VideoWriter openVideoWriter(const VideoCapture& vc, const char* outfile) {

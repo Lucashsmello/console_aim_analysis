@@ -36,11 +36,12 @@ class MatchObserver: public EventVideoCapture::VideoListener {
 	double sum_speed = 0;
 //	double sumX2 = 0;
 	int n = 0;
+	const int N_MAXFRAMES = 5 * 60;
 
 	double cur_angle = -1;
 	double last_angle = -1;
 	int last_fn = 0;
-	unsigned int last_frame_index_match = 0;
+	int last_frame_index_match = 0;
 	int first_fn = -1;
 	double first_angle = -1;
 	bool passed360 = false;
@@ -61,18 +62,10 @@ public:
 	}
 
 	virtual int frameRead(cv::Mat& mat, int frame_number) {
-
 		double delta_angle; //temporary variable;
 		double tmp; //temporary variable 2;
-//		cout << "frameRead() called" << endl;
-//		cout << "size=" << mat.rows << "x" << mat.cols << endl;
 		Mat new_mat(mat, R);
-//		Mat new_mat = tmp_mat.clone();
 
-//		imshow("W", new_mat);
-//		waitKey(1);
-
-//		cout << "cur_angle:" << cur_angle << endl;
 		if (first_fn == -1) {
 			last_frame_index_match = acq.getFrameIndex(new_mat, 0, 360);
 			updateCurrentAngle();
@@ -81,29 +74,44 @@ public:
 			first_angle = cur_angle;
 			passed360 = false;
 		} else {
-			last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match, 90);
+			try {
+				if (last_frame_index_match >= 0) {
+					last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match, 20);
+				} else {
+					last_frame_index_match = acq.getFrameIndex(new_mat, 0, 360);
+				}
+			} catch (CharacterOutOfPositionException& ex) {
+				if (ex.v > 50) {
+					throw;
+				}
+				last_frame_index_match = -1;
+				return 0;
+			}
 			updateCurrentAngle();
 
 			delta_angle = cur_angle - last_angle;
 			if (delta_angle < 0) {
-				if (passed360) {
-					return 1; // Two cycles completed.
-				}
+//				if (passed360) {
+//					return 1; // Two cycles completed.
+//				}
 				passed360 = true;
 				delta_angle = cur_angle + 360 - last_angle;
 			}
 			if (passed360) {
-				if (cur_angle > first_angle) { //A cycle completed
-					return 1;
-				}
+//				if (cur_angle > first_angle) { //A cycle completed
+//					return 1;
+//				}
 			}
 			tmp = delta_angle / (frame_number - last_fn);
 			sum_speed += tmp;
 //			sumX2 += tmp * tmp;
 			n++;
+			if (n >= N_MAXFRAMES) {
+				return 1;
+			}
 			if (frame_number % 45 == 0) {
-				cout << "delta_angle_rel:" << tmp << "  estimated avg speed:"
-						<< getAverageSpeed() << endl;
+				cout << "delta_angle_rel:" << tmp << "  estimated avg speed:" << getAverageSpeed()
+						<< endl;
 			}
 		}
 
@@ -261,7 +269,7 @@ double findXAimSpeed(int x_axis, int y_axis, const Acquisition& acq, bool fast_i
 	VCD.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
 	VCD.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	double ret=startExperimentX(VCD, x_axis, y_axis, acq, fast_init, single_tick);
+	double ret = startExperimentX(VCD, x_axis, y_axis, acq, fast_init, single_tick);
 	return ret;
 }
 
@@ -414,7 +422,7 @@ double findXAimSpeed(int x_axis, int y_axis) {
 	VCD.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
 	VCD.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	double ret = startExperimentX(VCD, x_axis, y_axis, 7);
+	double ret = startExperimentX(VCD, x_axis, y_axis, 12);
 //	vc.release();
 	return ret;
 }

@@ -5,6 +5,7 @@
  *      Author: Lucas
  */
 
+#include <assert.h>
 #include "Acquisition.hpp"
 #include "utils/ImageUtils.h"
 #include "utils/utils.h"
@@ -51,6 +52,7 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 				<< frames[0].rows << "x" << frames[0].cols << endl;
 		return 0;
 	}
+	assert(start_index_search < frames.size());
 	unsigned int end_index_search;
 	if (range_angle >= 359.9) {
 		start_index_search = 0;
@@ -62,17 +64,15 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 	const unsigned int end1 = MIN(end_index_search, frames.size());
 	const unsigned int end2 = end_index_search - end1;
 
-//	double low_mse = mse(frames[start_index_search], match);
-//	unsigned int low_index = start_index_search;
 	Compare lowest;
 	lowest.val = mse(frames[start_index_search], match);
 	lowest.index = start_index_search;
 
 //	#pragma omp parallel for reduction(minimum:lowest)
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (unsigned int i = start_index_search + 1; i < end1; i++) {
 		double cur_mse = mse(frames[i], match);
-	#pragma omp critical
+#pragma omp critical
 		{
 			if (cur_mse < lowest.val) {
 				lowest.index = i;
@@ -82,10 +82,10 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 	}
 
 //	#pragma omp parallel for reduction(minimum:lowest)
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (unsigned int i = 0; i < end2; i++) {
 		double cur_mse = mse(frames[i], match);
-	#pragma omp critical
+#pragma omp critical
 		{
 			if (cur_mse < lowest.val) {
 				lowest.index = i;
@@ -94,15 +94,14 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 		}
 	}
 
-//	imshow("MATCH", match);
-//	imshow("NEAR", frames[low_index]);
-//	imshow("N1", frames[low_index + 1]);
-//	imshow("N2", frames[low_index + 2]);
-//	imshow("N3", frames[low_index + 3]);
-//	waitKey(1);
-
-	if (lowest.val > 25) {
-		throw CharacterOutOfPositionException();
+	if (lowest.val > 22) {
+		cout << "CharacterOutOfPositionException: " << lowest.val << endl;
+		imwrite("MATCH.jpg", match);
+		imwrite("NEAR.jpg", frames[lowest.index]);
+//		imshow("MATCH", match);
+//		imshow("NEAR", frames[lowest.index]);
+//		waitKey(0);
+		throw CharacterOutOfPositionException(lowest.val);
 	}
 
 	return lowest.index;

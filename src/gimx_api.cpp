@@ -41,7 +41,7 @@ typedef struct {
 static char cmd[250];
 
 //static const char* SERVER_IP = "127.0.0.1";
-static const char* SERVER_IP = "192.168.0.2";
+static const char* SERVER_IP = "192.168.1.100";
 
 static int clamp(short int x, int min, int max) {
 	if (x > max) {

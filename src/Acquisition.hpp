@@ -21,7 +21,8 @@ static const int DX = RESX / 12;
 static const int DY = RESY / 12;
 //static const cv::Rect R(RESX / 2 - DX, RESY / 2 - DY, 1.22 * DX, 1.75 * DY); //OVERWATCH
 //static const cv::Rect R(RESX / 2 - 0.62 * DX, RESY / 2 - DY, 1.22 * DX, 1.72 * DY); //HORIZON
-static const cv::Rect R(240, 150, 110, 110); //DESTINY2
+//static const cv::Rect R(240, 190, 110, 110); //DESTINY2
+static const cv::Rect R(RESX / 2 - 55, RESY / 2 + 110, 110, 110); //Red Dead R2
 
 class Acquisition {
 public:
@@ -68,7 +69,8 @@ public:
 class CharacterOutOfPositionException: public std::exception {
 	char msg[110];
 public:
-	CharacterOutOfPositionException() {
+	const double v;
+	CharacterOutOfPositionException(double val) : v(val){
 		sprintf_s(msg,
 				">>>ERROR: It seems that the aim or position has moved by an external agent during experiment!<<<");
 	}
