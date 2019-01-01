@@ -126,10 +126,10 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 		}
 	}
 
-	if (lowest.val > 80) {
+	if (lowest.val > 75) {
 		cout << "CharacterOutOfPositionException: " << lowest.val << " | start_index_search="
 				<< start_index_search << endl;
-		if (lowest.val >= 100) {
+		if (lowest.val > 80) {
 			Mat mall;
 			hconcat(match, frames[lowest.index], mall);
 			hconcat(mall, cv::abs(match - frames[lowest.index]), mall);

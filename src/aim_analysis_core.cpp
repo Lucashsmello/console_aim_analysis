@@ -78,12 +78,12 @@ public:
 			try {
 				if (last_frame_index_match >= 0) {
 					last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match,
-							8 * (frame_number - last_fn));
+							7 * (frame_number - last_fn));
 				} else {
 					last_frame_index_match = acq.getFrameIndex(new_mat, 0, 360);
 				}
 			} catch (CharacterOutOfPositionException& ex) {
-				if (ex.v >= 75) {
+				if (ex.v > 80) {
 					throw;
 				}
 				last_frame_index_match = -1;
