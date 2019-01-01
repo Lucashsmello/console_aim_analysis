@@ -20,11 +20,11 @@ int main(int argc, char** argv) {
 //	pressButton(13,true);
 //	this_thread::sleep_for(chrono::milliseconds(1000));
 
-//	double angspeed = findXAimSpeed(40, 0);
-//	cout << "pivot_ang_speed:" << angspeed << endl;
-//	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
+	double angspeed = findXAimSpeed(114, 0);
+	cout << "pivot_ang_speed:" << angspeed << endl;
+	Acquisition acq(PIVOT_VIDEO_NAME, angspeed);
 
-	int bx = 38, ex = 55;
+	int bx = 88, ex = 85;
 	int by = 0, ey = 0;
 	bool fast_init = false;
 
@@ -33,8 +33,8 @@ int main(int argc, char** argv) {
 			for (int x = bx; x <= ex; x++) {
 				if (aimdata.hasXSpeed(x, y))
 					continue;
-//				double angspeed = findXAimSpeed(x, y, acq, false, false); // esse metodo so funciona se o video do pivot eh relativamente pequeno???
-				double angspeed = findXAimSpeed(x, y);
+				double angspeed = findXAimSpeed(x, y, acq, false, false); // esse metodo so funciona se o video do pivot eh relativamente pequeno???
+//				double angspeed = findXAimSpeed(x, y);
 				aimdata.saveResult(x, y, angspeed);
 //				fast_init = true;
 			}
