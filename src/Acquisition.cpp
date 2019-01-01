@@ -11,6 +11,7 @@
 #include "utils/utils.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 using namespace cv;
 using namespace std;
@@ -37,6 +38,37 @@ Acquisition::Acquisition(const string& video_file, double ang_speed) :
 
 double Acquisition::getAngle(const cv::Mat& match) const {
 	return getAngle(getFrameIndex(match, 0, 360));
+}
+
+static void debug_writeFrame(VideoWriter& vw, Mat match, Mat frame) {
+	const double n = match.channels() * match.total();
+	char text[6];
+	Mat mall;
+	Mat tmp = cv::abs(match - frame);
+	double error = mse(frame, match);
+	hconcat(match, frame, mall);
+	hconcat(mall, tmp, mall);
+	Mat tmp1 = equalizeIntensity(match);
+	Mat tmp2 = equalizeIntensity(frame);
+	Mat tmp3 = cv::abs(tmp1 - tmp2);
+	hconcat(tmp1, tmp2, tmp2);
+	hconcat(tmp2, tmp3, tmp3);
+	vconcat(mall, tmp3, mall);
+
+	Scalar s = sum(tmp);
+	double avg = (s.val[0] + s.val[1] + s.val[2]) / n;
+	Scalar d = sum(cv::abs(tmp - avg));
+	double ddd = (d.val[0] + d.val[1] + d.val[2]) / n;
+
+	snprintf(text, 6, "%.1lf", error);
+	cv::putText(mall, text, cv::Point(5, 15), cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
+			1.0, // Scale. 2.0 = 2x bigger
+			cv::Scalar(255, 255, 255)); // BGR Color
+	snprintf(text, 6, "%.1lf", ddd);
+	cv::putText(mall, text, cv::Point(5, match.rows - 16), cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
+			1.0, // Scale. 2.0 = 2x bigger
+			cv::Scalar(255, 255, 255)); // BGR Color
+	vw.write(mall);
 }
 
 struct Compare {
@@ -94,13 +126,27 @@ unsigned int Acquisition::getFrameIndex(const cv::Mat& match, unsigned int start
 		}
 	}
 
-	if (lowest.val > 22) {
-		cout << "CharacterOutOfPositionException: " << lowest.val << endl;
-		imwrite("MATCH.jpg", match);
-		imwrite("NEAR.jpg", frames[lowest.index]);
-//		imshow("MATCH", match);
-//		imshow("NEAR", frames[lowest.index]);
-//		waitKey(0);
+	if (lowest.val > 80) {
+		cout << "CharacterOutOfPositionException: " << lowest.val << " | start_index_search="
+				<< start_index_search << endl;
+		if (lowest.val >= 100) {
+			Mat mall;
+			hconcat(match, frames[lowest.index], mall);
+			hconcat(mall, cv::abs(match - frames[lowest.index]), mall);
+			imwrite("CharacterOutOfPositionException.jpg", mall);
+			imshow("CharacterOutOfPositionException", mall);
+			VideoWriter vwriter;
+			vwriter.open("CharacterOutOfPositionException.avi", CV_FOURCC('M', 'J', 'P', 'G'), 60,
+					Size(3 * R.width, 2 * R.height), true);
+			for (unsigned int i = start_index_search; i < end1; i++) {
+				debug_writeFrame(vwriter, match, frames[i]);
+			}
+			for (unsigned int i = 0; i < end2; i++) {
+				debug_writeFrame(vwriter, match, frames[i]);
+			}
+			vwriter.release();
+			waitKey(0);
+		}
 		throw CharacterOutOfPositionException(lowest.val);
 	}
 

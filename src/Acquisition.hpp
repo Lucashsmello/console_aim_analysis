@@ -9,6 +9,7 @@
 #define SRC_ACQUISITION_HPP_
 
 #include <opencv2/core.hpp>
+#include <vector>
 #include <string>
 
 namespace aim_analysis {
@@ -22,7 +23,7 @@ static const int DY = RESY / 12;
 //static const cv::Rect R(RESX / 2 - DX, RESY / 2 - DY, 1.22 * DX, 1.75 * DY); //OVERWATCH
 //static const cv::Rect R(RESX / 2 - 0.62 * DX, RESY / 2 - DY, 1.22 * DX, 1.72 * DY); //HORIZON
 //static const cv::Rect R(240, 190, 110, 110); //DESTINY2
-static const cv::Rect R(RESX / 2 - 55, RESY / 2 + 110, 110, 110); //Red Dead R2
+static const cv::Rect R(RESX / 2, RESY / 2 + 40, 110, 110); //Red Dead R2
 
 class Acquisition {
 public:
