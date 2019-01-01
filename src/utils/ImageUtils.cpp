@@ -342,21 +342,48 @@ int removeBuffer(VideoCapture& vc) {
 	return fc;
 }
 
+Mat equalizeIntensity(const Mat& inputImage) {
+	if (inputImage.channels() >= 3) {
+		Mat ycrcb;
+
+		cvtColor(inputImage, ycrcb, CV_BGR2YCrCb);
+
+		vector<Mat> channels;
+		split(ycrcb, channels);
+
+		equalizeHist(channels[0], channels[0]);
+
+		Mat result;
+		merge(channels, ycrcb);
+
+		cvtColor(ycrcb, result, CV_YCrCb2BGR);
+
+		return result;
+	}
+	return Mat();
+}
+
 double mse(const Mat& img1, const Mat& img2) {
-	Mat tmp;
+	Mat tmp, tmp1, tmp2;
 	const double n = img1.channels() * img1.total();
 	Scalar d;
+	tmp1 = equalizeIntensity(img1);
+	tmp2 = equalizeIntensity(img2);
 
-	absdiff(img1, img2, tmp);
+//	imshow("W2",tmp1);
+//	imshow("W3",tmp2);
+
+	absdiff(tmp1, tmp2, tmp);
 //	Scalar s = sum(tmp);
 //	double avg = (s.val[0] + s.val[1] + s.val[2]) / n;
 //	d = sum(cv::abs(tmp - avg));
-//	double std = (d.val[0] + d.val[1] + d.val[2]) / n;
+//	double ddd = (d.val[0] + d.val[1] + d.val[2]) / n;
 
 	tmp.convertTo(tmp, CV_32F);
 	tmp = tmp.mul(tmp);
 	Scalar s = sum(tmp);
 	double sse = (s.val[0] + s.val[1] + s.val[2]) / n; // sum channels
+//	cout << "std/(avg+1):" << ddd / (avg + 1) << endl;
 
 	return sqrt(sse);
 //	return sqrt(sse) * std / (avg + 1);

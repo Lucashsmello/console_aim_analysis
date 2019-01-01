@@ -50,6 +50,7 @@ int removeBuffer(cv::VideoCapture& vc);
 cv::VideoWriter openVideoWriter(const cv::VideoCapture& vc, const char* outfile);
 double mse(const cv::Mat& img1, const cv::Mat& img2);
 
+cv::Mat equalizeIntensity(const cv::Mat& inputImage);
 
 
 #endif /* CPP_UTILS_IMAGEUTILS_H_ */

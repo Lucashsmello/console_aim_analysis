@@ -62,6 +62,7 @@ public:
 	}
 
 	virtual int frameRead(cv::Mat& mat, int frame_number) {
+//		cout << "frame number: " << frame_number << endl;
 		double delta_angle; //temporary variable;
 		double tmp; //temporary variable 2;
 		Mat new_mat(mat, R);
@@ -76,12 +77,13 @@ public:
 		} else {
 			try {
 				if (last_frame_index_match >= 0) {
-					last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match, 20);
+					last_frame_index_match = acq.getFrameIndex(new_mat, last_frame_index_match,
+							8 * (frame_number - last_fn));
 				} else {
 					last_frame_index_match = acq.getFrameIndex(new_mat, 0, 360);
 				}
 			} catch (CharacterOutOfPositionException& ex) {
-				if (ex.v > 50) {
+				if (ex.v >= 75) {
 					throw;
 				}
 				last_frame_index_match = -1;
@@ -422,8 +424,10 @@ double findXAimSpeed(int x_axis, int y_axis) {
 	VCD.set(CV_CAP_PROP_FRAME_WIDTH, 1280); //1920x1080, 1280x720
 	VCD.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-	double ret = startExperimentX(VCD, x_axis, y_axis, 12);
+	double ret = startExperimentX(VCD, x_axis, y_axis, 22);
 //	vc.release();
+	destroyWindow("W");
+	destroyWindow("Match_frame0");
 	return ret;
 }
 
