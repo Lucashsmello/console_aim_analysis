@@ -1,21 +1,15 @@
-# console_aim_analysis
+# Console aim analysis
 A software for collecting data with respect to angular speed for each joystick input of PS4 fps games.
-It uses a video capture card, GIMX and a simple image comparison algorithm.
-This software has only been tested on Windows 10, because my cheap pci video capture card does not have drivers on Linux.
+It uses a video file (or video capture card), GIMX and a simple image comparison algorithm.
 
-## Build/Compile
-TODO
-### Requirements
+This is a work in progress...
 
-* A video capture card (anyone, but one that captures 1280x720 resolution at 60 fps is recomended).
-* MinGW
-* Opencv3.4 (I compiled myself using MinGW).
-* Boost c++ library.
-* OpenMP
-* GIMX 7
-
-### Instructions
+## Requirements
 TODO
 
-## How to Use
+## Installing
+`pip install -r requirements.txt`
+TODO
+
+## How to use
 TODO
