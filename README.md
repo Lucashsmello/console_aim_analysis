@@ -2,6 +2,8 @@
 A software for collecting data with respect to angular speed for each joystick input of PS4 fps games.
 It uses a video file (or video capture card), GIMX and a simple image comparison algorithm.
 
+This is a rework from a c++ code to python code. The intention is to be easy to install, extend/improve, add new features and easy to fix bugs.
+
 This is a work in progress...
 
 ## Requirements
