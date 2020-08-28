@@ -18,7 +18,7 @@ def saveData(data, fpath):
     df.to_csv(fpath, index=False)
 
 
-def estimateIterativeWithCaptureCard(vcap, xlist, ylist):
+def estimateWithCaptureCard_auto(vcap, xlist, ylist):
     aim_estimator = AimEstimator360()
     data = []
     for x, y in zip(xlist, ylist):
@@ -32,6 +32,14 @@ def estimateIterativeWithCaptureCard(vcap, xlist, ylist):
     return data
 
 
+def estimateVideoFile(vcap, x, y):
+    fps = vcap.get(cv.CAP_PROP_FPS)
+    assert(fps > 0), "Could not get FPS property from video file."
+    degrees_persec = AimEstimator360().estimateSpeed(vcap) * fps
+    print("Estimated speed of (%d,%d) is: %f degrees per seconds" % (x, y, degrees_persec))
+    return degrees_persec
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -41,10 +49,11 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--speeds-y',  metavar='N', type=int, nargs='+',
                         required=True, help='Y speeds from -128 to 127', choices=range(-128, 128))
     parser.add_argument('--gimx-server', type=str,
-                        help="format: IP_ADDRESS:PORT. This enables interactive mode")
+                        help="format: IP_ADDRESS:PORT. This enables auto mode")
     # parser.add_argument('--method', type=str, choices=['360'], default='360')
     args = parser.parse_args()
     assert(len(args.speeds_x) == len(args.speeds_y))
+
     if(args.gimx_server is not None):
         gimx_ip, gimx_port = args.gimx_server.split(':')
         initGIMXConnetion(gimx_ip, int(gimx_port))
@@ -52,11 +61,14 @@ if __name__ == '__main__':
         vcap = cv.VideoCapture(int(args.input))
         vcap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
         vcap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
-        data = estimateIterativeWithCaptureCard(vcap, args.speeds_x, args.speeds_y)
+        vcap.set(cv.CAP_PROP_FPS, FPS)
+        data = estimateWithCaptureCard_auto(vcap, args.speeds_x, args.speeds_y)
+        saveData(data, 'data.csv')
     else:
         assert(len(args.speeds_x) == 1), "Currently this implementation is only accepting one speed value."
         x = args.speeds_x[0]
         y = args.speeds_y[0]
         vcap = cv.VideoCapture(args.input)
+        degrees_persec = estimateVideoFile(vcap, x, y)
+        print("%d,%d,%f" % (x, y, degrees_persec))
     vcap.release()
-    saveData(data, 'data.csv')
