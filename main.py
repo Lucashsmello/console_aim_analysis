@@ -18,8 +18,13 @@ def saveData(data, fpath):
     df.to_csv(fpath, index=False)
 
 
-def estimateWithCaptureCard_auto(vcap, xlist, ylist):
-    aim_estimator = AimEstimator360()
+def estimateWithCaptureCard_auto(vcap, xlist, ylist, crop):
+    if(crop is None):
+        cropx = cropy = None
+    else:
+        cropx = (crop[0], crop[1])
+        cropy = (crop[2], crop[3])
+    aim_estimator = AimEstimator360(cropx=cropx, cropy=cropy)
     data = []
     for x, y in zip(xlist, ylist):
         print("Estimating speed of (%d,%d)..." % (x, y))
@@ -32,10 +37,16 @@ def estimateWithCaptureCard_auto(vcap, xlist, ylist):
     return data
 
 
-def estimateVideoFile(vcap, x, y):
+def estimateVideoFile(vcap, x, y, crop):
+    if(crop is None):
+        cropx = cropy = None
+    else:
+        cropx = (crop[0], crop[1])
+        cropy = (crop[2], crop[3])
+    aim_estimator = AimEstimator360(cropx=cropx, cropy=cropy)
     fps = vcap.get(cv.CAP_PROP_FPS)
     assert(fps > 0), "Could not get FPS property from video file."
-    degrees_persec = AimEstimator360().estimateSpeed(vcap) * fps
+    degrees_persec = aim_estimator.estimateSpeed(vcap) * fps
     print("Estimated speed of (%d,%d) is: %f degrees per seconds" % (x, y, degrees_persec))
     return degrees_persec
 
@@ -50,9 +61,18 @@ if __name__ == '__main__':
                         required=True, help='Y speeds from -128 to 127', choices=range(-128, 128))
     parser.add_argument('--gimx-server', type=str,
                         help="format: IP_ADDRESS:PORT. This enables auto mode")
+    parser.add_argument('--crop',  metavar='N', type=int, nargs=4,
+                        default=[200, 320, 480, 600],
+                        help='Crop video. Format: X1 X2 Y1 Y2. Example: --crop 200 320 480 600, will crop to box with top left coordinates (200,480) and bottom right (320,600).')
+    parser.add_argument('--dont-crop', action='store_true')
     # parser.add_argument('--method', type=str, choices=['360'], default='360')
     args = parser.parse_args()
     assert(len(args.speeds_x) == len(args.speeds_y))
+
+    if(args.dont_crop):
+        crop = None
+    else:
+        crop = args.crop
 
     if(args.gimx_server is not None):
         gimx_ip, gimx_port = args.gimx_server.split(':')
@@ -62,13 +82,13 @@ if __name__ == '__main__':
         vcap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
         vcap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
         vcap.set(cv.CAP_PROP_FPS, FPS)
-        data = estimateWithCaptureCard_auto(vcap, args.speeds_x, args.speeds_y)
+        data = estimateWithCaptureCard_auto(vcap, args.speeds_x, args.speeds_y, crop)
         saveData(data, 'data.csv')
     else:
         assert(len(args.speeds_x) == 1), "Currently this implementation is only accepting one speed value."
         x = args.speeds_x[0]
         y = args.speeds_y[0]
         vcap = cv.VideoCapture(args.input)
-        degrees_persec = estimateVideoFile(vcap, x, y)
+        degrees_persec = estimateVideoFile(vcap, x, y, crop)
         print("%d,%d,%f" % (x, y, degrees_persec))
     vcap.release()
