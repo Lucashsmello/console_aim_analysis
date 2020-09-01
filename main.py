@@ -20,38 +20,47 @@ def saveData(data, fpath):
     df.to_csv(fpath, index=False)
 
 
-def estimateWithCaptureCard_auto(vcap, xlist, ylist, crop):
+def estimateSpeed(vcap, crop):
     if(crop is None):
         cropx = cropy = None
     else:
         cropx = (crop[0], crop[1])
         cropy = (crop[2], crop[3])
-    aim_estimator = AimEstimator360(cropx=cropx, cropy=cropy)
-    data = []
+        assert(cropx[1]-cropx[0] < vcap.get(cv.CAP_PROP_FRAME_WIDTH) and
+               cropy[1]-cropy[0] < vcap.get(cv.CAP_PROP_FRAME_HEIGHT)), "Crop is bigger than the video resolution!"
+    fps = vcap.get(cv.CAP_PROP_FPS)
+    assert(fps > 0), "Could not get FPS property from video."
+    degrees_persec = AimEstimator360(cropx=cropx, cropy=cropy).estimateSpeed(vcap) * fps
+    return degrees_persec
+
+
+def estimateWithCaptureCard_auto(vid, xlist, ylist, crop):
+    vcap = cv.VideoCapture(vid)
+    vcap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
+    vcap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
+    vcap.set(cv.CAP_PROP_FPS, FPS)
+    degrees_persec_list = []
     for x, y in zip(xlist, ylist):
         print("Estimating speed of (%d,%d)..." % (x, y))
         sendAimSpeedCommand(x, y)
         sleep(0.5)  # dealing with latency
         removeBuffer(vcap)
-        degrees_persec = aim_estimator.estimateSpeed(vcap) * FPS
-        data.append([x, y, degrees_persec])
+        degrees_persec = estimateSpeed(vcap, crop)
+        degrees_persec_list.append(degrees_persec)
         print("Estimated speed is: %f degrees per second" % degrees_persec)
-    return data
-
-
-def estimateVideoFile(video_file, crop):
-    if(crop is None):
-        cropx = cropy = None
-    else:
-        cropx = (crop[0], crop[1])
-        cropy = (crop[2], crop[3])
-    assert(os.path.isfile(video_file)), "File not found: %s" % f
-    vcap = cv.VideoCapture(video_file)
-    fps = vcap.get(cv.CAP_PROP_FPS)
-    assert(fps > 0), "Could not get FPS property from video file."
-    degrees_persec = AimEstimator360(cropx=cropx, cropy=cropy).estimateSpeed(vcap) * fps
     vcap.release()
-    return degrees_persec
+    return degrees_persec_list
+
+
+def estimateVideoFile(video_files_list, crop):
+    degrees_persec_list = []
+    for vfile in video_files_list:
+        assert(os.path.isfile(vfile)), "File not found: %s" % f
+        vcap = cv.VideoCapture(vfile)
+        degrees_persec = estimateSpeed(vcap, crop)
+        vcap.release()
+        print("Estimated speed of %s is: %f degrees per second" % (vfile, degrees_persec))
+    return degrees_persec_list
 
 
 if __name__ == '__main__':
@@ -85,12 +94,9 @@ if __name__ == '__main__':
         initGIMXConnetion(gimx_ip, int(gimx_port))
     if(args.input[0].isdigit()):
         assert(len(args.speeds_x) >= 1), "No speed x or y provided! See options --speed-x and --speed-y"
-        vcap = cv.VideoCapture(int(args.input))
-        vcap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
-        vcap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
-        vcap.set(cv.CAP_PROP_FPS, FPS)
-        data = estimateWithCaptureCard_auto(vcap, args.speeds_x, args.speeds_y, crop)
-        vcap.release()
+        speeds_x = args.speeds_x
+        speeds_y = args.speeds_y
+        degrees_persec_list = estimateWithCaptureCard_auto(int(args.input), speeds_x, speeds_y, crop)
     else:
         if(args.input.endswith(".csv")):
             data = pd.read_csv(args.input, skipinitialspace=True)
@@ -104,9 +110,7 @@ if __name__ == '__main__':
             speeds_x = args.speeds_x
             speeds_y = args.speeds_y
             video_files = [args.input]
-        data = []
-        for vfile, x, y in zip(video_files, speeds_x, speeds_y):
-            degrees_persec = estimateVideoFile(vfile, crop=crop)
-            data.append([x, y, degrees_persec])
-            print("Estimated speed of (%d,%d) is %f degrees per second" % (x, y, degrees_persec))
+        degrees_persec_list = estimateVideoFile(video_files, crop=crop)
+    data = [(x, y, d) for x, y, d in zip(speeds_x, speeds_y, degrees_persec_list)]
+
     saveData(data, args.output)
