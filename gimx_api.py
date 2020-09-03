@@ -8,7 +8,7 @@ import sys
 SOCKET = None
 
 
-def initGIMXConnetion(server_ip, port=51914):
+def initGIMXConnection(server_ip, port=51914):
     global SOCKET
     SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     SOCKET.connect((server_ip, port))
