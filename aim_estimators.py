@@ -35,15 +35,24 @@ class AimEstimator360:
             distance = imageDistance(first_img, img)
             if(distance > 2*self.similarity_threshold+1):
                 is_starting = False
-            # cv.imshow('frame', img)
 
+            # cv.imshow('frame', img)
             # key = cv.waitKey(1) & 0xFF
             # if(key == ord('q')):
             #     break
             if(not is_starting):
                 if(distance < self.similarity_threshold):
-                    # cv.waitKey(0)
-                    return 360/n_frames
+                    break
+        min_distance = distance
+        while(True):
+            _, img = vcap.read()
+            if(img is None):
+                break
+            distance = imageDistance(first_img, img)
+            if(distance > min_distance):
+                return 360/n_frames
+            min_distance = distance
+            n_frames += 1
         raise AimEstimationException()
 
 
