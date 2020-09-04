@@ -32,14 +32,14 @@ def estimateWithCaptureCard_auto(vid, xlist, ylist, aim_estimator, cropx=None, c
     vcap = CroppedVideoCapture(cropx, cropy, vid)
     vcap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
     vcap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
-    vcap.set(cv.CAP_PROP_FPS, FPS)
     degrees_persec_list = []
     for x, y in zip(xlist, ylist):
         print("Estimating speed of (%d,%d)..." % (x, y))
         sendAimSpeedCommand(x, y)
         sleep(0.5)  # dealing with latency
         removeBuffer(vcap)
-        degrees_persec = estimateSpeed(vcap, aim_estimator)
+        # degrees_persec = estimateSpeed(vcap, aim_estimator)
+        degrees_persec = aim_estimator.estimateSpeed(vcap) * FPS
         degrees_persec_list.append(degrees_persec)
         print("Estimated speed is: %f degrees per second" % degrees_persec)
     vcap.release()

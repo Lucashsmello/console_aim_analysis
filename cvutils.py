@@ -9,6 +9,7 @@ class CroppedVideoCapture:
         else:
             assert(cropx[1]-cropx[0] < self.get(cv.CAP_PROP_FRAME_WIDTH) and
                    cropy[1]-cropy[0] < self.get(cv.CAP_PROP_FRAME_HEIGHT)), "Crop is bigger than the video resolution!"
+            assert(cropx[1] > cropx[0] and cropy[1] > cropy[0])
             self.cropx = slice(*cropx)
             self.cropy = slice(*cropy)
 
@@ -20,8 +21,14 @@ class CroppedVideoCapture:
             return retval, None
         return retval, img[self.cropy, self.cropx]
 
+    def grab(self):
+        self.vcap.grab()
+
     def release(self):
         self.vcap.release()
 
     def get(self, *args):
         return self.vcap.get(*args)
+
+    def set(self, *args):
+        return self.vcap.set(*args)
