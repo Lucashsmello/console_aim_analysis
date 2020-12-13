@@ -17,7 +17,7 @@ FPS = 60
 
 
 def saveData(data, fpath):
-    df = pd.DataFrame(data, columns=['x', 'y', 'speed'])
+    df = pd.DataFrame(data, columns=['x_axis', 'y_axis', 'x_speed'])
     df.to_csv(fpath, index=False)
 
 
