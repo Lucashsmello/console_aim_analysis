@@ -1,6 +1,8 @@
 import cv2 as cv
 from math import ceil
 import numpy as np
+import sys
+import time
 
 
 def imageDistance(img1, img2):
@@ -14,59 +16,84 @@ class AimEstimationException(Exception):
 
 
 class AimEstimator360:
-    def __init__(self, similarity_threshold=4):
+    def __init__(self, similarity_threshold=4, max_images_read_buffer=15):
         self.similarity_threshold = similarity_threshold
-        self.retry = 1
+        self.retry = 2
+        self.max_images_read_buffer = max_images_read_buffer
 
     def estimateSpeed(self, vcap: cv.VideoCapture):
         """
         returns: degrees per frame
         """
+
+        def most_similar_image(previous_images, cur_img):
+            distances = [imageDistance(img, cur_img) for img in previous_images]
+            i = np.argmin(distances)
+            return i, distances[i]
+
         retry = self.retry
         similarity_threshold = self.similarity_threshold
 
         _, first_img = vcap.read()
-        # cv.imshow('first img', first_img)
-        # cv.waitKey(1)
+        imgs_read = [first_img]
         is_starting = True
         n_frames = 0
         backup_frame_id = 0
-        while(True):
+
+        while(is_starting):
+            _, img = vcap.read()
+            if(img is None):
+                raise AimEstimationException()
+            n_frames += 1
+            distance = imageDistance(first_img, img)
+            if(len(imgs_read) < self.max_images_read_buffer):
+                imgs_read.append(img)
+            if(distance > 2*similarity_threshold+1 and n_frames>=3):
+                is_starting = False
+
+        backup_frame_id = vcap.get(cv.CAP_PROP_POS_FRAMES)  # used on the next try, if happens.
+        backup_frame_num = n_frames
+
+        while(True):  # while self.retry > 0
             try:
-                while(True):
+                while(distance >= similarity_threshold):
                     _, img = vcap.read()
                     if(img is None):
                         raise AimEstimationException()
                     n_frames += 1
-                    distance = imageDistance(first_img, img)
-                    if(distance > 2*similarity_threshold+1):
-                        is_starting = False
+                    similar_img_idx, distance = most_similar_image(imgs_read[:n_frames-backup_frame_num+1], img)
+                    if(len(imgs_read) < self.max_images_read_buffer):
+                        imgs_read.append(img)
 
-                    #cv.imshow('frame', img)
-                    #key = cv.waitKey(1) & 0xFF
-                    # if(key == ord('q')):
-                    #    break
-                    if(not is_starting):
-                        if(distance < similarity_threshold):
-                            backup_frame_id = vcap.get(cv.CAP_PROP_POS_FRAMES)
-                            break
                 min_distance = distance
+                similar_img_idx_best = similar_img_idx
+
+                '''
+                cv.imshow('best match', imgs_read[similar_img_idx_best])
+                cv.imshow('current img', img)
+                cv.waitKey(0)
+                '''
+
+                # Continue to read images until similarity no longer decreases.
                 while(True):
                     _, img = vcap.read()
                     if(img is None):
                         break
-                    distance = imageDistance(first_img, img)
+                    similar_img_idx, distance = most_similar_image(imgs_read[:n_frames-backup_frame_num+1], img)
                     if(distance > min_distance):
-                        return 360/n_frames
+                        break
                     min_distance = distance
+                    similar_img_idx_best = similar_img_idx
                     n_frames += 1
-                raise AimEstimationException()
+                return 360/(n_frames-similar_img_idx_best)
             except AimEstimationException as e:
                 if(retry == 0):
-                    raise AimEstimationException()
+                    raise e
                 retry -= 1
                 similarity_threshold *= 2
                 vcap.set(cv.CAP_PROP_POS_FRAMES, backup_frame_id)
+                n_frames = backup_frame_num
+                imgs_read = imgs_read[:n_frames+1]
 
 
 class AimEstimatorPivot:
@@ -91,6 +118,7 @@ class AimEstimatorPivot:
         idx_begin -= 1  # conservative
         idx_begin = max(idx_begin, 0)
         if(idx_begin > idx_end):
+            # The separation of self.frames comes of this array being a circular one (after 360=0 in degrees).
             frames1 = self.frames[idx_begin:]
             frames2 = self.frames[:idx_end+1]
             distance1 = ((frames1-img)**2).mean(axis=dims)
@@ -108,8 +136,9 @@ class AimEstimatorPivot:
             distance = ((frames-img)**2).mean(axis=dims)
             i = np.argmin(distance)
             mindist = distance[i]
+            
             i += idx_begin
-        assert(mindist <= 30), "Pivot video does not seem to have something in common with the video file!"
+        assert(mindist <= 40), "Pivot video does not seem to have something in common with the video file!"
         return i*self.pivot_degrees_perframe
 
     def estimateSpeed(self, vcap):
