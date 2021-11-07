@@ -24,7 +24,7 @@ def saveData(data, fpath):
 def estimateSpeed(vcap, aim_estimator):
     fps = vcap.get(cv.CAP_PROP_FPS)
     assert(fps > 0), "Could not get FPS property from video."
-    degrees_persec = aim_estimator.estimateSpeed(vcap) * fps  # AimEstimator360(cropx=cropx, cropy=cropy)
+    degrees_persec = aim_estimator.estimateSpeed(vcap) * fps
     return degrees_persec
 
 
