@@ -61,9 +61,9 @@ def estimateVideoFile(video_files_list, aim_estimator, cropx=None, cropy=None):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', type=str,
+    parser.add_argument('-i', '--input', type=str, metavar='FILE',
                         required=True, help="Video file or csv file with video files or video capture id.")
-    parser.add_argument('-o', '--output', type=str,
+    parser.add_argument('-o', '--output', type=str, metavar='FILE',
                         default='data_estimated-speed.csv', help="output csv file")
     parser.add_argument('-x', '--speeds-x',  metavar='N', type=int, nargs='+',
                         required=False, help='X speeds from -128 to 127', choices=range(-128, 128))
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--gimx-server', type=str,
                         help="format: IP_ADDRESS:PORT. This enables auto mode")
     parser.add_argument('--crop',  metavar='N', type=int, nargs=4,
-                        default=[200, 320, 480, 600],
+                        default=[100, 200, 100, 200],
                         help='Crop video. Format: X1 X2 Y1 Y2. Example: --crop 200 320 480 600, will crop to box with top left coordinates (200,480) and bottom right (320,600).')
     parser.add_argument('--dont-crop', action='store_true')
     parser.add_argument('--pivot', type=str, help="Video file")
