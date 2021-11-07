@@ -1,7 +1,7 @@
 import cv2 as cv
 from math import ceil
 import numpy as np
-
+import sys
 
 def imageDistance(img1, img2):
     return ((img1-img2)**2).mean()
@@ -53,8 +53,8 @@ class AimEstimator360:
                 break
         ############################
 
-        # cv.imshow('first_img', first_img)
-        # cv.waitKey(1)
+        cv.imshow('first_img', first_img)
+        cv.waitKey(52)  # For some reason, opencv with qt5 backend has to wait more than 50ms in order to work with small images
         backup_frame_id = vcap.get(cv.CAP_PROP_POS_FRAMES)  # used on the next try, if happens.
         backup_frame_num = n_frames
 
@@ -68,12 +68,15 @@ class AimEstimator360:
                     similar_img_idx, distance = most_similar_image(imgs_read[:n_frames-backup_frame_num+1], img)
                     if(len(imgs_read) < self.max_images_read_buffer):
                         imgs_read.append(img)
+                    if(n_frames % 100 == 0):
+                        sys.stdout.write("frames read: %d   \r" % n_frames)
+                        sys.stdout.flush()
 
                 min_distance = distance
                 similar_img_idx_best = similar_img_idx
 
                 # cv.imshow('best match', imgs_read[similar_img_idx_best])
-                # cv.waitKey(1)
+                # cv.waitKey(52)
 
                 # Continue to read images until similarity no longer decreases.
                 while(True):

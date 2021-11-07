@@ -114,9 +114,9 @@ if __name__ == '__main__':
             speeds_x = data['x']
             speeds_y = data['y']
         else:
-            assert(len(args.speeds_x) >= 1), "No speed x or y provided! See options --speed-x and --speed-y"
-            speeds_x = args.speeds_x
-            speeds_y = args.speeds_y
+            # assert(len(args.speeds_x) >= 1), "No speed x or y provided! See options --speed-x and --speed-y"
+            speeds_x = [None]
+            speeds_y = [None]
             video_files = [args.input]
         degrees_persec_list = estimateVideoFile(video_files, aim_estimator, cropx, cropy)
     data = [(x, y, d) for x, y, d in zip(speeds_x, speeds_y, degrees_persec_list)]
