@@ -11,13 +11,14 @@ It uses a video file (or video capture card), GIMX and a simple image comparison
 ## How to use
 ### Collect data
 You should first collect your data (video files).
-1. Run gimx in server mode. `gimx --src 127.0.0.1:51914 -p /dev/ttyUSB0`. I am assuming your joystick is connected to usb. You can specific a configuration file, if you want. See Section [Controller Options](https://gimx.fr/wiki/index.php?title=Command_line) of gimx official wiki for more details.
+1. Run gimx in server mode. `gimx --src 127.0.0.1:51914 -p /dev/ttyUSB0`. I am assuming your joystick is connected to usb. You can specify a configuration file (--config), if you want. See Section [Controller Options](https://gimx.fr/wiki/index.php?title=Command_line) of gimx official wiki for more details.
 2. Disable motion blur, fog, UI, and other stuff (if possible) that may add random motion to your video even when your are not moving.
 3. Find a place in your game where the image is mostly static (when your are not moving) and there is no object moving. For example, if its raining or there is a fog, avoid them by going inside a house. Just a small portion of your image needs to be static.
 4. Look all the way down to the ground (recommended) or all the way up to the ceiling. 
 5. Run gimx command line with your desired X_SPEED (example: 15): `gimx --event "rel_axis_2(X_VALUE)" --event "rel_axis_3(0)" -d 127.0.0.1:51914`. Your character should start rotating now. For X_SPEED, I suggest a lot of low values right above the dead zone and some mid/high values. For example, assuming deadzone is 13 and we are using playstation/ds4, we can test 14,15,16,17,18,19,110, and 127.
-6. Record the videos, one for each tested X_SPEED, and write in their respective X_SPEED somewhere. I suggest to write the X_SPPED in the name of the video file.
-7. Make a csv file with the meta info of your collected data in this format (see [this example](https://drive.google.com/drive/u/0/folders/1FuS7wlk8MzDVKK0Us2UqGMjYV5WFslC3)): 
+6. Record the videos, one for each desired X_SPEED, and write in their respective X_SPEED somewhere. I suggest to write the X_SPPED in the name of the video file.
+7. **IMPORTANT:** The recorded video should last at least a full rotation (>=360 degrees) and less than two rotations (<720 degrees). I recommend anything above 370 degrees and less than 720 degrees. For very high speeds, I recommend more than 420 degrees.
+8. Make a csv file with the meta info of your collected data in this format (see [this example](https://drive.google.com/drive/u/0/folders/1FuS7wlk8MzDVKK0Us2UqGMjYV5WFslC3)): 
 ```
 file name, x, y
 data/video1.avi,13,0
