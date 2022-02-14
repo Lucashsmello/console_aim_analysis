@@ -3,8 +3,11 @@ from math import ceil
 import numpy as np
 import sys
 
+
 def imageDistance(img1, img2):
-    return ((img1-img2)**2).mean()
+    img1 = img1.astype(int)
+    img2 = img2.astype(int)
+    return ((img1-img2)**2).mean() ** 0.5
 
 
 class AimEstimationException(Exception):
@@ -14,9 +17,9 @@ class AimEstimationException(Exception):
 
 
 class AimEstimator360:
-    def __init__(self, similarity_threshold=32, max_images_read_buffer=30):
+    def __init__(self, similarity_threshold=5, max_images_read_buffer=30):
         self.similarity_threshold = similarity_threshold
-        self.retry = 0  # number of times to estimate aim. Each new retry, the similarity_threshold is doubled.
+        self.retry = 0  # number of times to estimate aim. Each new retry, the similarity_threshold is increased.
         self.max_images_read_buffer = max_images_read_buffer
 
     def estimateSpeed(self, vcap: cv.VideoCapture):
@@ -49,7 +52,7 @@ class AimEstimator360:
             distance = imageDistance(first_img, img)
             if(len(imgs_read) < self.max_images_read_buffer):
                 imgs_read.append(img)
-            if(distance > 2*similarity_threshold+1 and n_frames >= 7):
+            if(distance > 1.5*similarity_threshold+1 and n_frames >= 7):
                 break
         ############################
 
@@ -94,7 +97,7 @@ class AimEstimator360:
                 if(retry == 0):
                     raise e
                 retry -= 1
-                similarity_threshold *= 2
+                similarity_threshold *= 1.5
                 vcap.set(cv.CAP_PROP_POS_FRAMES, backup_frame_id)
                 n_frames = backup_frame_num
                 imgs_read = imgs_read[:n_frames+1]
